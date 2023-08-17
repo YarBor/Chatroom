@@ -81,8 +81,8 @@ template <typename T> int Message_Package<T>::send(int &fd)
     // 恢复原始的文件描述符标志
     fcntl(fd, F_SETFL, original_flags);
 
-    if (i)
-        std::cout << "SEND()ed \n" << this->data->DebugString() << std::endl << fd << std::endl << std::endl;
+    // if (i)
+        // std::cout << "SEND()ed \n" << this->data->DebugString() << std::endl << fd << std::endl << std::endl;
 
     return i;
 }
@@ -124,7 +124,7 @@ template <typename T> std::shared_ptr<T> Message_Package<T>::Recv(int &fd)
     this->data->Clear();
     this->data->ParseFromString(tmp_string);
 
-    std::cout << "RECV()ed \n" << this->data->DebugString() << std::endl << fd << std::endl << std::endl;
+    // std::cout << "RECV()ed \n" << this->data->DebugString() << std::endl << fd << std::endl << std::endl;
 
     // 恢复原始的文件描述符标志
     fcntl(fd, F_SETFL, original_flags);
