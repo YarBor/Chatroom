@@ -30,7 +30,6 @@
 int Close(int fd)
 {
     printf("fd %d:> will close \n", fd);
-    getchar();
     return close(fd);
 }
 
@@ -341,7 +340,7 @@ int main()
 
         for (auto i = 0; i < num; i++)
         {
-            puts("returned \n");
+            // puts("returned \n");
             if (ep.buffer[i].data.fd == ep.listenfd)
             {
                 auto t = std::make_shared<task>(accept(ep.listenfd, nullptr, nullptr));
@@ -355,7 +354,7 @@ int main()
             }
             else
             {
-                LOG(INFO) << "IN " << ep.buffer[i].data.fd << std::endl;
+                // LOG(INFO) << "IN " << ep.buffer[i].data.fd << std::endl;
                 auto a = ep.find_event(ep.buffer[i].data.fd);
                 if (a != nullptr)
                 {
@@ -384,13 +383,13 @@ void do_job(std::shared_ptr<task> t, int epollfd)
         case dd::data_data_mode_SEND_FILE:
         {
             if (recv_file(t))
-                Epoll::add_event(t, EPOLLIN | EPOLLHUP | EPOLLET | EPOLLERR | EPOLLRDHUP);
+                Epoll::add_event(t, EPOLLIN | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
             break;
         }
         case dd::data_data_mode_RECV_FILE:
         {
             if (send_file(t))
-                Epoll::add_event(t, EPOLLOUT | EPOLLHUP | EPOLLERR | EPOLLET | EPOLLRDHUP);
+                Epoll::add_event(t, EPOLLOUT | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
             break;
         }
         default:
@@ -474,7 +473,6 @@ bool send_file(std::shared_ptr<task> t)
         if (fd == -1)
         {
             send_err(t, ee::error_package_mode_RECV_FILE_FAIL, "creating file failed");
-            Close(fd);
             return false;
         }
         else
@@ -489,17 +487,19 @@ bool send_file(std::shared_ptr<task> t)
         auto i = sendfile(t->fd, fd, &offset, t->file_data->size() - t->file_data->offset());
         if (i == -1)
         {
-            Close(fd);
-            return false;
+            close(fd);
+            return true;
         }
         t->file_data->set_offset(offset);
         if (t->file_data->size() == t->file_data->offset() && i == 0)
         {
+            LOG(INFO) << "sended " << t->file_data->filename() << " (" << t->file_data->size() << ") :> " << offset << std::endl;
             t->step++;
         }
         else
         {
-            Close(fd);
+            LOG(INFO) << "sended " << t->file_data->filename() << " (" << t->file_data->size() << ") :> " << offset << std::endl;
+            close(fd);
             return true;
         }
     }
@@ -575,6 +575,7 @@ bool recv_file(std::shared_ptr<task> t)
                 {
                     t->file_data->set_offset(i);
                     file.close();
+                    LOG(INFO) << "recved " << t->file_data->filename() << " (" << t->file_data->size() << ") :> " << i << std::endl;
                     return true;
                 }
                 perror("Error reading");

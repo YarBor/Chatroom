@@ -1046,17 +1046,33 @@ bool do_command(int fd, int &skfd, const std::vector<std::string> &commands, Cac
         {
             if (nt.mode == dd::data_data_mode_SEND_FILE_DONE)
             {
-                nt.notify->details()[0].UnpackTo(&tmpdata);
-                for (auto &i : tmpdata.details())
-                    if (i.Is<ChatProto::file>())
-                    {
-                        i.UnpackTo(tmp_file_data.get());
-                        if (tmp_file_data->filename() == commands[3])
+                if (!nt.notify->details()[0].Is<ChatProto::data>())
+                {
+                    for (auto &i : nt.notify->details())
+                        if (i.Is<ChatProto::file>())
                         {
-                            file_data = tmp_file_data;
-                            break;
+                            i.UnpackTo(tmp_file_data.get());
+                            if (tmp_file_data->filename() == commands[3])
+                            {
+                                file_data = tmp_file_data;
+                                break;
+                            }
                         }
-                    }
+                }
+                else
+                {
+                    nt.notify->details()[0].UnpackTo(&tmpdata);
+                    for (auto &i : tmpdata.details())
+                        if (i.Is<ChatProto::file>())
+                        {
+                            i.UnpackTo(tmp_file_data.get());
+                            if (tmp_file_data->filename() == commands[3])
+                            {
+                                file_data = tmp_file_data;
+                                break;
+                            }
+                        }
+                }
             }
         }
         if (file_data == nullptr)
