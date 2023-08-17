@@ -14,8 +14,13 @@ std::string LISTEN_IP;
 std::string LISTEN_PORT;
 int threadNumber = 5;
 uint BUFFER_SIZE = 1024;
+std::string sql_user = "root";
+std::string sql_user_password = "password";
+std::string Mysql_server_ip = "127.0.0.1";
+std::string Log_path;
 
-std::function<std::string()> file_server_port([]() -> std::string {
+std::function<std::string()> file_server_port([]() -> std::string
+                                              {
     try
     {
         std::ifstream file("config.json");
@@ -31,10 +36,10 @@ std::function<std::string()> file_server_port([]() -> std::string {
     catch (...)
     {
         return "";
-    }
-});
+    } });
 
-std::function<std::string()> file_server_ip([]() -> std::string {
+std::function<std::string()> file_server_ip([]() -> std::string
+                                            {
     try
     {
         std::ifstream file("config.json");
@@ -50,8 +55,7 @@ std::function<std::string()> file_server_ip([]() -> std::string {
     catch (...)
     {
         return "";
-    }
-});
+    } });
 
 timespec convertToTimespec(double seconds);
 
@@ -77,6 +81,10 @@ void init()
         timeout_limit_times.it_value = std::move(convertToTimespec(config["timeout_limit_times"].get<double>()));
         BUFFER_SIZE = config["buffer_size"].get<int>();
         threadNumber = config["worker_thread_number"].get<int>();
+        sql_user = config["Mysql_user_name"].get<std::string>();
+        sql_user_password = config["Mysql_user_password"].get<std::string>();
+        Mysql_server_ip = config["Mysql_server_ip"].get<std::string>();
+        Log_path = config["Server_log_path"].get<std::string>();
         // multi_Progress = config["multi-progress"].get<bool>();
         // auto i = config["fileServer"].get<json>();
         // file_server_ip = i["ip"].get<string>();

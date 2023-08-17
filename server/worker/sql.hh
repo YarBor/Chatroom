@@ -4,6 +4,9 @@
 #include <iostream>
 #include <memory>
 #include <string>
+extern std::string sql_user;
+extern std::string sql_user_password;
+extern std::string Mysql_server_ip;
 extern size_t SQL_READ_BUFFER_SIZE;
 namespace mysql
 {

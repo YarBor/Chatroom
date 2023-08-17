@@ -9,6 +9,7 @@ std::string file_server_port;
 int file_server_thread_nums = 0;
 timespec convertToTimespec(double seconds);
 uint BUFFER_SIZE = 1024;
+std::string log_path;
 void init()
 {
     using nlohmann::json;
@@ -28,6 +29,7 @@ void init()
         file_server_ip = i["ip"].get<string>();
         file_server_port = i["port"].get<string>();
         file_server_thread_nums = i["file_server_thread_nums"].get<int>();
+        log_path = i["file_server_log_path"].get<std::string>();
         BUFFER_SIZE = config["buffer_size"].get<uint>();
     }
     catch (const nlohmann::json::exception &e)

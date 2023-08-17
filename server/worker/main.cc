@@ -9,6 +9,7 @@ extern std::string LISTEN_IP;
 extern std::string LISTEN_PORT;
 extern std::string PROCESS_COMMUNTCTION_PORT;
 extern int threadNumber;
+extern std::string Log_path;
 
 extern bool multi_Progress;
 
@@ -35,6 +36,8 @@ int main()
 {
     init();
     signal(SIGINT, handle_sigint);
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_log_dir = Log_path.c_str();
     mysql_library_init(0, NULL, NULL); // 初始化MySQL库
     /**
      * 从 "config.json" 文件中读取 multi_Progress => <bool>

@@ -27,6 +27,7 @@ void update_data(ChatProto::data &data, std::shared_ptr<task> job, mysql::Mysql 
 void load_user_relation_data(ChatProto::data &data, std::shared_ptr<task> job, mysql::Mysql &sql);
 void get_online_friend(ChatProto::data &data, std::shared_ptr<task> job, mysql::Mysql &sql);
 
+
 #define do_sql(PUTIN)                                                                                                  \
     do                                                                                                                 \
     {                                                                                                                  \

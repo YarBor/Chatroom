@@ -315,9 +315,16 @@ private:
 extern std::string file_server_ip;
 extern std::string file_server_port;
 extern int file_server_thread_nums;
+extern std::string log_path;
+
 int main()
 {
     init();
+    google::InitGoogleLogging(argv[0]);
+
+    // 设置日志输出目录
+    if (log_path.empty())
+        FLAGS_log_dir = log_path.c_str();
     auto dir = opendir("files");
     if (dir == NULL)
     {

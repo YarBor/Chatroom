@@ -1,12 +1,17 @@
 {
-    "listen_ip": "10.30.0.171",
+    "listen_ip": "127.0.0.1",
     "listen_port": "55175",
-    "timeout_limit_times": 300000,
+    "timeout_limit_times": 30000,
     "buffer_size": 1024,
     "worker_thread_number": 9,
+    "Server_log_path": "/tmp",
     "fileServer": {
-        "ip": "10.30.0.171",
+        "ip": "127.0.0.1",
         "port": "59274",
-        "file_server_thread_nums": 4
-    }
+        "file_server_thread_nums": 4,
+        "file_server_log_path": "/tmp"
+    },
+    "Mysql_server_ip": "127.0.0.1",
+    "Mysql_user_name": "root",
+    "Mysql_user_password": "password"
 }

@@ -53,7 +53,7 @@ mysql::Mysql::Mysql()
         fprintf(stderr, "Error initializing MySQL: %s\n", mysql_error(mysql));
         exit(1);
     }
-    mysql = mysql_real_connect(mysql, "localhost", "root", "wangyibodemima", "chatroom", 0, NULL,
+    mysql = mysql_real_connect(mysql, Mysql_server_ip.c_str(), sql_user.c_str(), sql_user_password.c_str(), "chatroom", 0, NULL,
                                0); // 连接到指定的数据库
     if (mysql == NULL)             // 处理连接到数据库失败的情况
     {

@@ -9,9 +9,6 @@ message process_data_package {
   int32 Pid = 3;
 }
 
-message heartbeat_data_package { uint32 online_num = 1; 
-  string timestamp = 3;
-}
 
 message msg_data_package {
   string TimeStamp = 1;
