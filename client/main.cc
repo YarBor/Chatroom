@@ -32,6 +32,37 @@ bool deal_notices(Cache &cache, notifications &notifications_mode, std::shared_p
 
 std::shared_ptr<ChatProto::data> downLoad_his_htfy(int &skfd);
 
+#include <stdio.h>
+#include <termios.h>
+
+void enableEcho()
+{
+    struct termios term;
+
+    // 获取终端属性
+    tcgetattr(STDIN_FILENO, &term);
+
+    // 修改属性中的标志位，开启回显
+    term.c_lflag |= ECHO;
+
+    // 设置终端属性
+    tcsetattr(STDIN_FILENO, TCSANOW, &term);
+}
+
+void disableEcho()
+{
+    struct termios term;
+
+    // 获取终端属性
+    tcgetattr(STDIN_FILENO, &term);
+
+    // 修改属性中的标志位，关闭回显
+    term.c_lflag &= ~ECHO;
+
+    // 设置终端属性
+    tcsetattr(STDIN_FILENO, TCSANOW, &term);
+}
+
 void displayMenu()
 {
     std::cout << "Welcome to the Menu!" << std::endl;
@@ -93,7 +124,9 @@ std::shared_ptr<ChatProto::user_data_package> get_user_data(int fd)
             dprintf(fd, "Enter your ID: \n");
             getline(std::cin, user_name_id);
             dprintf(fd, "Enter your password: \n");
+            disableEcho();
             getline(std::cin, user_password);
+            enableEcho();
             try
             {
                 user->set_id(std::stol(trimString(user_name_id)));
@@ -111,15 +144,25 @@ std::shared_ptr<ChatProto::user_data_package> get_user_data(int fd)
         {
             dprintf(fd, "Enter your name: \n");
             getline(std::cin, user_name_id);
+            if (user_name_id.find("{}[]:\";'\\<>,./?!@#$%^&*()_+ ~`=-") != std::string::npos)
+            {
+                dprintf(fd, "special characters are not allowed\n like[{}[]:\";'\\<>,./?!@#$%^&*()_+ ~`=-]\n");
+                continue;
+            }
             dprintf(fd, "Enter your password: \n");
+            disableEcho();
             getline(std::cin, user_password);
+            enableEcho();
             dprintf(fd, "Enter your password again: \n");
             std::string user_password1;
+            disableEcho();
             getline(std::cin, user_password1);
+            enableEcho();
             // getline(std::cin, user_password);
             if (user_password1 != user_password)
             {
-                dprintf(fd, "Passwords entered twice are different\n");
+                dprintf(fd, "Passwords entered twice are different\n Sing in false \n");
+                continue;
             }
             dprintf(fd, "Enter your email: \n");
             getline(std::cin, user_email);
