@@ -1,0 +1,153 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+
+package ChatProto;
+
+message process_data_package {
+  string IP = 1;
+  string Port = 2;
+  int32 Pid = 3;
+}
+
+message heartbeat_data_package { uint32 online_num = 1; 
+  string timestamp = 3;
+}
+
+message msg_data_package {
+  string TimeStamp = 1;
+  string Message = 2;
+  user_data_package speaker = 3;
+}
+
+message data {
+  enum data_mode {
+    LOAD_SERVER = 0;
+    FRIEND_LOAD_SERVER = 28;
+    LOAD_SERVER_OK = 1;
+    CHAT_FRIEND = 2;
+    CHAT_FRIEND_OK = 3;
+    CHAT_GROUP = 30;
+    CHAT_GROUP_OK = 29;
+    REQUEST_MAKE_FRIEND = 4;
+    REQUEST_MAKE_FRIEND_OK = 5;
+    ANSWER_MAKE_FRIEND = 6;
+    ANSWER_MAKE_FRIEND_OK = 7;
+    DELETE_FRIEND = 8;
+    DELETE_FRIEND_OK = 9;
+    MAKE_GROUP = 10;
+    MAKE_GROUP_OK = 11;
+    DELETE_GROUP = 12;
+    DELETE_GROUP_OK = 13;
+    REQUEST_JOIN_GROUP = 14;
+    REQUEST_JOIN_GROUP_OK = 15;
+    MANAGE_JOIN_GROUP = 16;
+    MANAGE_JOIN_GROUP_OK = 17;
+    MANAGE_GROUP = 18;
+    MANAGE_GROUP_OK = 19;
+    SEND_FILE = 20;
+    SEND_FILE_DONE = 32;
+    SEND_FILE_OK = 21;
+    SEND_FILE_DONE_OK = 33;
+    RECV_FILE = 22;
+    RECV_FILE_OK = 23;
+    IGNORE_FRIEND = 24;
+    IGNORE_FRIEND_OK = 25;
+    UNIGNORE_FRIEND = 26;
+    UNIGNORE_FRIEND_OK = 27;
+    FRIEND_LOG_OUT = 31;
+    UPDATE_DATA = 34;
+    UPDATE_DATA_OK = 35;
+    LOAD_USER_RELATION_DATA = 36;
+    LOAD_USER_RELATION_DATA_OK = 37;
+    GET_ONLINE_FRIENDS = 38;
+    false = 999;
+    success = 1000;
+  };
+  data_mode action = 1;
+  repeated google.protobuf.Any details = 2;
+  string timestamp = 3;
+}
+
+message user_data_package {
+  int64 id = 1;
+  string name = 2;
+  optional string password = 3;
+  optional string email = 4;
+  enum LOAD_SERVER {
+    LOG_IN = 0;
+    SIGN_UP = 1;
+  }
+  optional LOAD_SERVER status = 5; // 1 to
+  bool is_active = 6;
+}
+
+message friend_relation {
+  user_data_package Master = 1;
+  user_data_package follower = 2;
+  int32 status = 3;
+  string chatid = 4;
+}
+
+message group_relation {
+  user_data_package Master = 1;
+  user_data_package follower = 2;
+  int32 status = 3;
+  // 1 to member  2 to manager 3 to owner
+  // 5 to upgrade member
+  // 6 to downgrade manager
+  // 7 to join member
+  // 8 to delete member
+  user_data_package owner = 4;
+  repeated user_data_package manager = 5;
+  repeated user_data_package member = 7;
+  string chatid = 6;
+  string id = 8;
+  string name = 9;
+}
+
+message chatHistory_data_package {
+  string chatid = 4;
+  optional uint64 recevier_id = 8;
+  repeated msg_data_package messages = 3;
+}
+
+message error_package {
+  enum mode {
+    OK = 0;
+    LOAD_SERVER_FAIL = 1;
+    CHAT_FRIEND_FAIL = 2;
+    REQUEST_MAKE_FRIEND_FAIL = 3;
+    ANSWER_MAKE_FRIEND_FAIL = 4;
+    DELETE_FRIEND_FAIL = 5;
+    MAKE_GROUP_FAIL = 6;
+    DELETE_GROUP_FAIL = 7;
+    REQUEST_JOIN_GROUP_FAIL = 8;
+    MANAGE_JOIN_GROUP_FAIL = 9;
+    MANAGE_GROUP_FAIL = 10;
+    SEND_FILE_FAIL = 11;
+    RECV_FILE_FAIL = 12;
+    IGNORE_FRIEND_FAIL = 13;
+    UNIGNORE_FRIEND_FAIL = 14;
+    UPDATE_DATA_FAIL = 15;
+    LOAD_USER_RELATION_DATA_FAIL = 16;
+    GET_ONLINE_FRIENDS_FAIL = 17;
+  }
+  mode stat = 1;
+  optional string reason = 2;
+}
+
+message file {
+  user_data_package owner = 9;
+  int64 size = 1;
+  int64 offset = 2;
+  string fileName = 3;
+  string IP = 4;
+  string port = 5;
+  string md5 = 6;
+  enum file_act{
+    send = 0;
+    resend = 1;
+  }
+  file_act act_mode = 8;
+}
+
