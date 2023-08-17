@@ -168,7 +168,7 @@ void notifications::show_notify(int fd, const notification &n)
     using dd = ChatProto::data_data_mode;
     std::string output;
 
-    std::cout << n.notify->DebugString() << std::endl;
+    // std::cout << n.notify->DebugString() << std::endl;
 
     switch (n.notify->action())
     {

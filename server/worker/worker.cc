@@ -640,7 +640,7 @@ void manage_gruop(ChatProto::data &Data, std::shared_ptr<task> job, mysql::Mysql
     }
     case 8: {
         do_sql("delete from relationship  where chatid = '" << member_change.chatid()
-                                                            << "' , tgt2 = " << member_change.follower().id());
+                                                            << "' AND tgt2 = " << member_change.follower().id());
         break;
     }
     default:

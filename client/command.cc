@@ -192,11 +192,14 @@ bool do_command(int fd, int &skfd, const std::vector<std::string> &commands, Cac
         dprintf(fd, "%s\n", i.c_str());
         return true;
     }
-    else if(c == "relink" && commands.size() == 2){
-        if(link(skfd)){
+    else if (c == "relink" && commands.size() == 2)
+    {
+        if (link(skfd))
+        {
             dprintf(fd, "linked seccessfully\n");
         }
-        else {
+        else
+        {
             dprintf(fd, "linked false\n");
         }
     }
@@ -363,6 +366,10 @@ bool do_command(int fd, int &skfd, const std::vector<std::string> &commands, Cac
     }
     else if (c == "manage")
     {
+        if (commands.size() != 5)
+        {
+            goto wrong_manage;
+        }
         if (commands[2] == "--friend" || commands[2] == "-f")
         {
             if (commands.size() != 5)
@@ -576,22 +583,32 @@ bool do_command(int fd, int &skfd, const std::vector<std::string> &commands, Cac
                 }
                 else if (commands[4] == "--delete" || commands[4] == "-d")
                 {
-                    if (gr->status() <= 1)
+                    if (commands[5] == std::to_string(user_data->id()))
+                    {
+                        target = std::make_shared<ChatProto::user_data_package>(*user_data);
+                    }
+                    else if (gr->status() <= 1)
                     {
                         dprintf(fd, "u are not manager/owner \n");
                         return false;
                     }
-                    for (auto i : gr->member())
-                    {
-                        if (commands[5] == std::to_string(i.id()))
+                    else
+                        for (auto i : gr->member())
                         {
-                            target = std::make_shared<ChatProto::user_data_package>(i);
-                            break;
+                            if (commands[5] == std::to_string(i.id()))
+                            {
+                                target = std::make_shared<ChatProto::user_data_package>(i);
+                                break;
+                            }
                         }
-                    }
                     if (target == nullptr)
                     {
                         dprintf(fd, "target member not found \n");
+                        return false;
+                    }
+                    else if (target->id() == gr->owner().id())
+                    {
+                        dprintf(fd, "Cannot delete self because U are the owner \n");
                         return false;
                     }
                     else
@@ -695,14 +712,19 @@ bool do_command(int fd, int &skfd, const std::vector<std::string> &commands, Cac
                         gr->add_member()->CopyFrom(*target);
                         break;
                     case 8:
-                        for (auto i = 0; i < gr->member().size(); ++i)
+                        if (target->id() == user_data->id())
                         {
-                            if (gr->member()[i].id() == target->id())
-                            {
-                                gr->mutable_member()->DeleteSubrange(i, 1);
-                                break;
-                            }
+                            cache->delete_group_relation(gr);
                         }
+                        else
+                            for (auto i = 0; i < gr->member().size(); ++i)
+                            {
+                                if (gr->member()[i].id() == target->id())
+                                {
+                                    gr->mutable_member()->DeleteSubrange(i, 1);
+                                    break;
+                                }
+                            }
                     }
                     // 加入通知
                     auto iasdf = std::make_shared<ChatProto::data>();
@@ -1007,7 +1029,7 @@ bool do_command(int fd, int &skfd, const std::vector<std::string> &commands, Cac
         {
             dprintf(fd, "please input the right command / path / ID\nlike\n [: recvfile "
                         "{friend-ID} {file-name} {load/path}] \n");
-            return false;   
+            return false;
         }
         auto i = cache->find_friend_from_id(commands[2]);
         if (i == nullptr)
@@ -1051,7 +1073,8 @@ bool do_command(int fd, int &skfd, const std::vector<std::string> &commands, Cac
             dprintf(fd, "the path must be direct to a directory , [%s] cannot \n", commands[4].c_str());
             return false;
         }
-        else {
+        else
+        {
             closedir(iii);
         }
         auto file_name = commands[4] + ("/" + (commands[4].back() == '/')) + file_data->filename();

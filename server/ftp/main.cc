@@ -27,6 +27,13 @@
 #include "../../proto.hh"
 #include <openssl/evp.h>
 
+int Close(int fd)
+{
+    printf("fd %d:> will close \n", fd);
+    getchar();
+    return close(fd);
+}
+
 class task;
 void init();
 void do_job(std::shared_ptr<task> t, int fd);
@@ -107,12 +114,12 @@ class lock
 {
     friend struct task;
     bool is_locked_ = false;
-    lock(std::mutex &i) : mtx(i)
+    lock(std::mutex *i) : mtx(i)
     {
-        is_locked_ = i.try_lock();
+        is_locked_ = i->try_lock();
     }
 
-    std::mutex &mtx;
+    std::mutex *mtx;
 
 public:
     bool is_lock() const
@@ -122,7 +129,7 @@ public:
     ~lock()
     {
         if (is_locked_ == true)
-            mtx.unlock();
+            mtx->unlock();
     }
 };
 
@@ -135,7 +142,7 @@ struct task
     }
     ~task()
     {
-        close(fd);
+        Close(fd);
         LOG(INFO) << "fd closed  :" << fd << std::endl;
         delete file_data;
     }
@@ -147,7 +154,7 @@ struct task
     std::mutex mtx;
     lock get_lock()
     {
-        return mtx;
+        return &mtx;
     }
 };
 
@@ -182,8 +189,8 @@ public:
     }
     ~Epoll()
     {
-        close(epfd);
-        close(listenfd);
+        Close(epfd);
+        Close(listenfd);
     }
     int wait()
     {
@@ -281,9 +288,7 @@ public:
         {
             auto job = this->pop();
             if (job == nullptr)
-            {
                 return;
-            }
             else
             {
                 auto lock_ = job->get_lock();
@@ -336,6 +341,7 @@ int main()
 
         for (auto i = 0; i < num; i++)
         {
+            puts("returned \n");
             if (ep.buffer[i].data.fd == ep.listenfd)
             {
                 auto t = std::make_shared<task>(accept(ep.listenfd, nullptr, nullptr));
@@ -344,20 +350,21 @@ int main()
             }
             else if (ep.buffer[i].events & (EPOLLHUP | EPOLLRDHUP | EPOLLERR))
             {
+                LOG(INFO) << "hup " << ep.buffer[i].data.fd << std::endl;
                 ep.remove_event(ep.buffer[i].data.fd);
-                ++unlinktime;
             }
             else
             {
-                auto a = std::move(ep.find_event(ep.buffer[i].data.fd));
+                LOG(INFO) << "IN " << ep.buffer[i].data.fd << std::endl;
+                auto a = ep.find_event(ep.buffer[i].data.fd);
                 if (a != nullptr)
                 {
                     tp.submit(a);
-                    if (epoll_ctl(ep.epfd, EPOLL_CTL_DEL, a->fd, 0) == -1)
-                    {
-                        perror("Error adding file descriptor to epoll");
-                        // 处理错误的逻辑
-                    }
+                    // if (epoll_ctl(ep.epfd, EPOLL_CTL_DEL, a->fd, 0) == -1)
+                    // {
+                    //     perror("Error adding file descriptor to epoll");
+                    //     // 处理错误的逻辑
+                    // }
                 }
             }
         }
@@ -377,18 +384,13 @@ void do_job(std::shared_ptr<task> t, int epollfd)
         case dd::data_data_mode_SEND_FILE:
         {
             if (recv_file(t))
-                // 一次没读完
-                Epoll::add_event(t, EPOLLIN | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
-            else
-                close(t->fd);
+                Epoll::add_event(t, EPOLLIN | EPOLLHUP | EPOLLET | EPOLLERR | EPOLLRDHUP);
             break;
         }
         case dd::data_data_mode_RECV_FILE:
         {
             if (send_file(t))
-                Epoll::add_event(t, EPOLLOUT | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
-            else
-                close(t->fd);
+                Epoll::add_event(t, EPOLLOUT | EPOLLHUP | EPOLLERR | EPOLLET | EPOLLRDHUP);
             break;
         }
         default:
@@ -398,14 +400,14 @@ void do_job(std::shared_ptr<task> t, int epollfd)
     else if (t->status == dd::data_data_mode_SEND_FILE)
     {
         // 重启 epoll 字段
-        recv_file(t);
-        Epoll::add_event(t, EPOLLIN | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
+        if (recv_file(t) == false)
+            Epoll::remove_event(t->fd);
     }
     else if (t->status == dd::data_data_mode_RECV_FILE)
     {
-        send_file(t);
         // 重启 epoll 字段
-        Epoll::add_event(t, EPOLLOUT | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
+        if (send_file(t) == false)
+            Epoll::remove_event(t->fd);
     }
 }
 
@@ -472,7 +474,7 @@ bool send_file(std::shared_ptr<task> t)
         if (fd == -1)
         {
             send_err(t, ee::error_package_mode_RECV_FILE_FAIL, "creating file failed");
-            close(fd);
+            Close(fd);
             return false;
         }
         else
@@ -487,7 +489,7 @@ bool send_file(std::shared_ptr<task> t)
         auto i = sendfile(t->fd, fd, &offset, t->file_data->size() - t->file_data->offset());
         if (i == -1)
         {
-            close(fd);
+            Close(fd);
             return false;
         }
         t->file_data->set_offset(offset);
@@ -497,18 +499,18 @@ bool send_file(std::shared_ptr<task> t)
         }
         else
         {
-            close(fd);
+            Close(fd);
             return true;
         }
     }
     default:
-        close(fd);
+        Close(fd);
     }
     // int fd = open(filename.c_str(), O_RDONLY);
     // if (fd < 0)
     // {
     //   send_err(t, ee::error_package_mode_RECV_FILE_FAIL, "creating file failed");
-    //   close(t->fd);
+    //   Close(t->fd);
     // }
     // else
     // {
@@ -518,8 +520,8 @@ bool send_file(std::shared_ptr<task> t)
     // Message_Package<ChatProto::data> msg;
     // // msg.Recv(t->fd)->action() == dd::data_data_mode_SEND_FILE_OK;
     // auto data = msg.Recv(t->fd);
-    // close(fd);
-    // close(t->fd);
+    // Close(fd);
+    // Close(t->fd);
     // return;
     return false;
 }
@@ -569,16 +571,16 @@ bool recv_file(std::shared_ptr<task> t)
             auto rb = recv(t->fd, buffer, std::min((long)BUFFER_SIZE, size - i), 0);
             if (rb <= 0)
             {
-                if (!(errno & (EAGAIN | EWOULDBLOCK)))
+                if (rb == -1 && (errno & (EAGAIN | EWOULDBLOCK)))
                 {
-                    perror("Error reading");
-                    close(t->fd);
+                    t->file_data->set_offset(i);
                     file.close();
-                    return false;
+                    return true;
                 }
-                t->file_data->set_offset(i);
+                perror("Error reading");
+                Close(t->fd);
                 file.close();
-                return true;
+                return false;
             }
             else
             {
@@ -587,7 +589,9 @@ bool recv_file(std::shared_ptr<task> t)
                 t->file_data->set_offset(i);
             }
         }
-        file.close();
+        if (file.is_open())
+            file.close();
+
         // int iasdf = open(filename.c_str(), O_RDONLY);
 
         // if (!(calculateFileMD5(iasdf) == t->file_data->md5()))
@@ -598,13 +602,14 @@ bool recv_file(std::shared_ptr<task> t)
         // }
         // else
         t->step++;
-        // close(i);
+        // Close(i);
     }
     case 2:
     {
         send_data_package(t, dd::data_data_mode_RECV_FILE_OK);
         t->step++;
-        file.close();
+        if (file.is_open())
+            file.close();
     }
     default:
         return false;
@@ -613,7 +618,7 @@ bool recv_file(std::shared_ptr<task> t)
     // if (fd < 0)
     // {
     //   send_err(t, ee::error_package_mode_SEND_FILE_FAIL, "creating file failed");
-    //   close(t->fd);
+    //   Close(t->fd);
     // }
     // else
     // {
@@ -629,8 +634,8 @@ bool recv_file(std::shared_ptr<task> t)
     //   {
     //     LOG(WARNING) << "recv error " << t->file_data->DebugString();
     //     send_err(t, ee::error_package_mode_SEND_FILE_FAIL, "md5 check failed");
-    //     close(t->fd);
-    //     close(fd);
+    //     Close(t->fd);
+    //     Close(fd);
     //     unlink(filename.c_str());
     //     return;
     //   }
@@ -640,14 +645,14 @@ bool recv_file(std::shared_ptr<task> t)
     // if (calculateFileMD5(fd) == t->file_data->md5())
     // {
     //   send_data_package(t, dd::data_data_mode_RECV_FILE_OK);
-    //   close(t->fd);
-    //   close(fd);
+    //   Close(t->fd);
+    //   Close(fd);
     // }
     // else
     // {
     //   send_err(t, ee::error_package_mode_SEND_FILE_FAIL, "md5 check failed");
-    //   close(t->fd);
-    //   close(fd);
+    //   Close(t->fd);
+    //   Close(fd);
     //   unlink(filename.c_str());
     // }
 }

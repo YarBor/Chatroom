@@ -1,11 +1,11 @@
 {
-    "listen_ip": "127.0.0.1",
-    "listen_port": "55125",
+    "listen_ip": "10.30.0.171",
+    "listen_port": "55175",
     "timeout_limit_times": 300000,
     "buffer_size": 1024,
     "worker_thread_number": 9,
     "fileServer": {
-        "ip": "127.0.0.1",
+        "ip": "10.30.0.171",
         "port": "59274",
         "file_server_thread_nums": 4
     }

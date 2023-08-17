@@ -468,7 +468,7 @@ std::shared_ptr<ChatProto::data> downLoad_his_htfy(int &skfd)
 bool prase_his_htfy(Cache &cache, notifications &notifications_mode, std::shared_ptr<ChatProto::data> data,
                     history_show &hss, int &skfd)
 {
-    std::cout << data->DebugString() << std::endl;
+    // std::cout << data->DebugString() << std::endl;
 
     if (data->action() == dd::data_data_mode_UPDATE_DATA_OK) // 是 update
     {

@@ -176,7 +176,6 @@ struct file
     {
         if (fd != -1)
         {
-            std::cout << fd << " closed" << std::endl;
             close(fd);
         }
     }
@@ -202,6 +201,5 @@ struct file
   protected:
     file(int fd) : fd(fd)
     {
-        std::cout << fd << " opened" << std::endl;
     };
 };
