@@ -32,12 +32,13 @@ void handle_sigint(int sig)
     printf("done\n");
     exit(0);
 }
-int main()
+int main(int argc, char **argv)
 {
     init();
     signal(SIGINT, handle_sigint);
     google::InitGoogleLogging(argv[0]);
-    FLAGS_log_dir = Log_path.c_str();
+    if (!Log_path.empty())
+        FLAGS_log_dir = Log_path.c_str();
     mysql_library_init(0, NULL, NULL); // 初始化MySQL库
     /**
      * 从 "config.json" 文件中读取 multi_Progress => <bool>

@@ -13,5 +13,5 @@
     },
     "Mysql_server_ip": "127.0.0.1",
     "Mysql_user_name": "root",
-    "Mysql_user_password": "password"
+    "Mysql_user_password": "Mysql_user_password"
 }

@@ -317,7 +317,7 @@ extern std::string file_server_port;
 extern int file_server_thread_nums;
 extern std::string log_path;
 
-int main()
+int main(int argc , char **argv)
 {
     init();
     google::InitGoogleLogging(argv[0]);

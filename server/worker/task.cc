@@ -61,14 +61,14 @@ std::shared_ptr<std::vector<std::shared_ptr<ChatProto::data>>> task::deal_timeou
     uint64_t num_exp;
     if (read(fd, &num_exp, sizeof(uint64_t)) == -1)
         LOG(ERROR) << "timer_fd read false";
-    Message_Package<ChatProto::heartbeat_data_package> hb_p;
+    Message_Package<ChatProto::data> hb_p;
     {
         std::lock_guard<std::mutex> lock(online_number_lock);
-        hb_p.data->set_online_num(online_number);
+        // hb_p.data->set_online_num(online_number);
     }
     {
         std::lock_guard<std::mutex> lock(this->fd_mutex);
-        hb_p.send(fd);
+        // hb_p.send(fd);
     }
     timerfd_settime(this->fd, 0, &timeout_limit_times, nullptr);
     return nullptr;
